@@ -11,6 +11,13 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # ── Prep ──────────────────────────────────────────────────────────────────
+    # Remove global.json — let the system dotnet pick its own SDK version
+    - name: Remove global.json
+      shell: pwsh
+      run: Remove-Item global.json -ErrorAction SilentlyContinue
+
+    # ── Node / React ──────────────────────────────────────────────────────────
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
@@ -24,51 +31,46 @@ jobs:
         npm ci
         npm run build
 
-    # Pin exact SDK so the workload installs into the same slot the build uses.
-    # global.json is removed so this version is used without conflict.
-    - name: Remove global.json
+    # ── MAUI Workload ─────────────────────────────────────────────────────────
+    # Do NOT use setup-dotnet — it puts dotnet in a different path than where
+    # workloads install, breaking SDK resolution. Use the system dotnet on the
+    # runner (already has .NET 8/9/10 preview). Install maui-windows into it.
+    - name: Show system dotnet info
       shell: pwsh
-      run: Remove-Item global.json -ErrorAction SilentlyContinue
-
-    - name: Setup .NET 10
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.300'
+      run: |
+        Write-Host "dotnet path: $((Get-Command dotnet).Source)"
+        dotnet --list-sdks
 
     - name: Install MAUI Windows Workload
       shell: pwsh
       run: |
-        $sdkVer = (dotnet --version)
-        Write-Host "Active SDK: $sdkVer"
         dotnet workload install maui-windows --skip-sign-check
         dotnet workload list
 
-    - name: Restore NuGet packages
-      run: dotnet restore src/Hiravir/Hiravir.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
-
+    # ── Build ─────────────────────────────────────────────────────────────────
     - name: Build MAUI App
       shell: pwsh
       run: |
-        # Skip the embedded React build (already done above) and AOT (not needed for portable build)
         dotnet build src/Hiravir/Hiravir.csproj `
           -c Release `
           -f net10.0-windows10.0.19041.0 `
           -r win-x64 `
-          --no-restore `
           -p:WindowsPackageType=None `
           -p:SelfContained=true `
           -p:PublishAot=false `
           -p:PublishReadyToRun=false `
           -p:AppxPackageSigningEnabled=false `
-          -p:SkipReactBuild=true
+          -p:SkipReactBuild=true `
+          -p:EnableWindowsTargeting=true
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    # ── Package ───────────────────────────────────────────────────────────────
     - name: Collect output
       shell: pwsh
       run: |
         $exes = Get-ChildItem -Recurse src/Hiravir/bin -Filter "Hiravir.exe" -ErrorAction SilentlyContinue
         if ($exes.Count -eq 0) {
-          Write-Host "No Hiravir.exe found. Full bin listing:"
+          Write-Host "Hiravir.exe not found — full bin listing:"
           Get-ChildItem -Recurse src/Hiravir/bin -ErrorAction SilentlyContinue | Select-Object FullName
           exit 1
         }

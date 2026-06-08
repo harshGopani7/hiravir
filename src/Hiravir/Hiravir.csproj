@@ -38,7 +38,7 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.*" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.*" />
-    <PackageReference Include="CommunityToolkit.Maui" Version="9.*" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="14.*" />
 
     <!-- SQLite embedded -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.*" />
