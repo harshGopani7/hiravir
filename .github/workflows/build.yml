@@ -35,14 +35,8 @@ jobs:
     - name: Build & Publish MAUI App (unpackaged, self-contained)
       shell: pwsh
       run: |
-        # MAUI Windows does not support `dotnet publish` from CLI.
-        # Use MSBuild directly via the VS-installed msbuild or dotnet build
-        # with WindowsPackageType=None to get a plain .exe output folder.
-        $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-        $msbuild  = & $vsWhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
-        if (-not $msbuild) { throw "MSBuild not found via vswhere" }
-        Write-Host "Using MSBuild: $msbuild"
-        & $msbuild src\Hiravir\Hiravir.csproj `
+        # Use `dotnet msbuild` so the .NET 10 SDK toolchain is used (not VS MSBuild 17).
+        dotnet msbuild src/Hiravir/Hiravir.csproj `
           /t:Build `
           /p:Configuration=Release `
           /p:TargetFramework=net10.0-windows10.0.19041.0 `
@@ -51,7 +45,7 @@ jobs:
           /p:SelfContained=true `
           /p:PublishAot=false `
           /p:PublishReadyToRun=true `
-          /p:OutputPath=${{ github.workspace }}\publish\hiravir-win\ `
+          "/p:OutputPath=${{ github.workspace }}/publish/hiravir-win/" `
           /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
