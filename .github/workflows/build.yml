@@ -17,7 +17,15 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Install MAUI Windows Workload
-      run: dotnet workload install maui-windows --skip-sign-check
+      run: |
+        dotnet workload install maui-windows --skip-sign-check
+        dotnet workload restore src/Hiravir/Hiravir.csproj
+
+    - name: Verify SDK and workloads
+      run: |
+        dotnet --version
+        dotnet --list-sdks
+        dotnet workload list
 
     - name: Setup Node
       uses: actions/setup-node@v4
