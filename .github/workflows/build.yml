@@ -44,7 +44,7 @@ jobs:
         dotnet workload list
 
     - name: Restore NuGet packages
-      run: dotnet restore src/Hiravir/Hiravir.csproj -f net10.0-windows10.0.19041.0
+      run: dotnet restore src/Hiravir/Hiravir.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
 
     - name: Build MAUI App
       shell: pwsh
