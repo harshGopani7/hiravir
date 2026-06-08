@@ -17,12 +17,12 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Install MAUI Windows Workload
-      run: dotnet workload install maui-windows
+      run: dotnet workload install maui-windows --skip-sign-check
 
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
         cache-dependency-path: ui/package-lock.json
 
@@ -32,18 +32,32 @@ jobs:
         npm ci
         npm run build
 
-    - name: Publish C# MAUI App (unpackaged, self-contained)
-      working-directory: ./src/Hiravir
-      run: >
-        dotnet publish
-        -f net10.0-windows10.0.19041.0
-        -c Release
-        -r win-x64
-        -p:WindowsPackageType=None
-        -p:SelfContained=true
-        -p:PublishAot=false
-        -p:PublishReadyToRun=true
-        --output ../../publish/hiravir-win
+    - name: Build & Publish MAUI App (unpackaged, self-contained)
+      shell: pwsh
+      run: |
+        # MAUI Windows does not support `dotnet publish` from CLI.
+        # Use MSBuild directly via the VS-installed msbuild or dotnet build
+        # with WindowsPackageType=None to get a plain .exe output folder.
+        $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $msbuild  = & $vsWhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+        if (-not $msbuild) { throw "MSBuild not found via vswhere" }
+        Write-Host "Using MSBuild: $msbuild"
+        & $msbuild src\Hiravir\Hiravir.csproj `
+          /t:Build `
+          /p:Configuration=Release `
+          /p:TargetFramework=net10.0-windows10.0.19041.0 `
+          /p:RuntimeIdentifier=win-x64 `
+          /p:WindowsPackageType=None `
+          /p:SelfContained=true `
+          /p:PublishAot=false `
+          /p:PublishReadyToRun=true `
+          /p:OutputPath=${{ github.workspace }}\publish\hiravir-win\ `
+          /v:minimal
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: List output (debug)
+      shell: pwsh
+      run: Get-ChildItem -Recurse publish\ -ErrorAction SilentlyContinue | Select-Object FullName | Select-Object -First 30
 
     - name: Upload Finished App
       uses: actions/upload-artifact@v4
