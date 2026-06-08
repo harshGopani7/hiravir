@@ -38,7 +38,7 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.*" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.*" />
-    <PackageReference Include="CommunityToolkit.Maui" Version="10.*" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="9.*" />
 
     <!-- SQLite embedded -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.*" />
@@ -53,8 +53,8 @@
     <MauiAsset Include="wwwroot\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Build React frontend before MAUI build -->
-  <Target Name="BuildReactApp" BeforeTargets="BeforeBuild">
+  <!-- Build React frontend before MAUI build (skip in CI with -p:SkipReactBuild=true) -->
+  <Target Name="BuildReactApp" BeforeTargets="BeforeBuild" Condition="'$(SkipReactBuild)' != 'true'">
     <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\..\..\ui" />
     <ItemGroup>
       <ReactBuildOutput Include="$(MSBuildProjectDirectory)\..\..\ui\dist\**\*" />
