@@ -11,21 +11,19 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # Remove global.json so the runner uses whatever .NET 10 SDK it has,
+    # with no version-pin conflicts.
+    - name: Remove global.json (avoid SDK version mismatch on CI)
+      shell: pwsh
+      run: Remove-Item global.json -ErrorAction SilentlyContinue
+
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
 
     - name: Install MAUI Windows Workload
-      run: |
-        dotnet workload install maui-windows --skip-sign-check
-        dotnet workload restore src/Hiravir/Hiravir.csproj
-
-    - name: Verify SDK and workloads
-      run: |
-        dotnet --version
-        dotnet --list-sdks
-        dotnet workload list
+      run: dotnet workload install maui-windows --skip-sign-check
 
     - name: Setup Node
       uses: actions/setup-node@v4
@@ -40,26 +38,36 @@ jobs:
         npm ci
         npm run build
 
-    - name: Build & Publish MAUI App (unpackaged, self-contained)
+    - name: Build MAUI App (unpackaged, self-contained)
       shell: pwsh
       run: |
-        # Use `dotnet msbuild` so the .NET 10 SDK toolchain is used (not VS MSBuild 17).
-        dotnet msbuild src/Hiravir/Hiravir.csproj `
-          /t:Build `
-          /p:Configuration=Release `
-          /p:TargetFramework=net10.0-windows10.0.19041.0 `
-          /p:RuntimeIdentifier=win-x64 `
-          /p:WindowsPackageType=None `
-          /p:SelfContained=true `
-          /p:PublishAot=false `
-          /p:PublishReadyToRun=true `
-          "/p:OutputPath=${{ github.workspace }}/publish/hiravir-win/" `
-          /v:minimal
+        dotnet build src/Hiravir/Hiravir.csproj `
+          -c Release `
+          -f net10.0-windows10.0.19041.0 `
+          -r win-x64 `
+          -p:WindowsPackageType=None `
+          -p:SelfContained=true `
+          -p:PublishAot=false `
+          -p:PublishReadyToRun=true `
+          -p:AppxPackageSigningEnabled=false
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    - name: List output (debug)
+    - name: Locate and collect output
       shell: pwsh
-      run: Get-ChildItem -Recurse publish\ -ErrorAction SilentlyContinue | Select-Object FullName | Select-Object -First 30
+      run: |
+        # Find the built exe and copy everything to a clean publish folder
+        $exes = Get-ChildItem -Recurse src/Hiravir/bin -Filter "Hiravir.exe" -ErrorAction SilentlyContinue
+        Write-Host "Found executables:"
+        $exes | ForEach-Object { Write-Host $_.FullName }
+        if ($exes.Count -eq 0) {
+          Write-Host "No exe found. Listing bin folder:"
+          Get-ChildItem -Recurse src/Hiravir/bin -ErrorAction SilentlyContinue | Select-Object FullName
+          exit 1
+        }
+        $outDir = $exes[0].DirectoryName
+        Write-Host "Output dir: $outDir"
+        New-Item -ItemType Directory -Force -Path publish/hiravir-win | Out-Null
+        Copy-Item "$outDir\*" publish/hiravir-win/ -Recurse -Force
 
     - name: Upload Finished App
       uses: actions/upload-artifact@v4
