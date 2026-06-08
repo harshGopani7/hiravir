@@ -1,0 +1,36 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch: # Allows you to trigger the build manually
+
+jobs:
+  build:
+    runs-on: windows-latest # This cloud machine already has Visual Studio installed!
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Install MAUI Workload
+      run: dotnet workload install maui
+
+    - name: Build React UI
+      working-directory: ./ui
+      run: |
+        npm install
+        npm run build
+
+    - name: Publish C# MAUI App
+      working-directory: ./src/Hiravir
+      run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true
+
+    - name: Upload Finished App
+      uses: actions/upload-artifact@v3
+      with:
+        name: Hiravir-Portable-App
+        path: src/Hiravir/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish/

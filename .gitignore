@@ -1,0 +1,44 @@
+# ── .NET / C# ────────────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.log
+
+# Native AOT / publish output
+publish/
+**/bin/Release/
+**/bin/Debug/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# ── MAUI ─────────────────────────────────────────────────────────────────────
+**/Platforms/**/bin/
+**/Platforms/**/obj/
+
+# wwwroot is generated from React build — don't track it
+src/Hiravir/wwwroot/assets/
+src/Hiravir/wwwroot/index.html
+
+# ── React / Node (root-level, ui/ has its own .gitignore) ────────────────────
+ui/node_modules/
+ui/dist/
+ui/.vite/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

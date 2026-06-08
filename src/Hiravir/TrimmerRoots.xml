@@ -1,0 +1,13 @@
+<linker>
+  <assembly fullname="Hiravir">
+    <type fullname="Hiravir.Core.Interop.InteropBridge" preserve="all" />
+    <type fullname="Hiravir.Core.Accounting.VoucherValidator" preserve="all" />
+    <type fullname="Hiravir.Core.Accounting.LedgerTreeService" preserve="all" />
+    <type fullname="Hiravir.Core.Accounting.VoucherService" preserve="all" />
+    <type fullname="Hiravir.Core.Accounting.CompanyService" preserve="all" />
+    <type fullname="Hiravir.Core.Data.DatabaseService" preserve="all" />
+    <type fullname="Hiravir.Core.Models.AppJsonContext" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.Data.Sqlite" preserve="all" />
+  <assembly fullname="SQLitePCLRaw.core" preserve="all" />
+</linker>

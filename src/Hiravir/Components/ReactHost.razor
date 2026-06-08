@@ -1,0 +1,21 @@
+@namespace Hiravir.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject Hiravir.Core.Interop.InteropBridge Bridge
+@implements IAsyncDisposable
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Bridge.InitializeAsync(JS);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Bridge.DisposeAsync();
+    }
+}
