@@ -1,36 +1,52 @@
 name: Build Windows App
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest 
+    runs-on: windows-latest
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4 # <-- Updated to v4
+      uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4 # <-- Updated to v4
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
 
-    - name: Install MAUI Workload
-      run: dotnet workload install maui
+    - name: Install MAUI Windows Workload
+      run: dotnet workload install maui-windows
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ui/package-lock.json
 
     - name: Build React UI
       working-directory: ./ui
       run: |
-        npm install
+        npm ci
         npm run build
 
-    - name: Publish C# MAUI App
+    - name: Publish C# MAUI App (unpackaged, self-contained)
       working-directory: ./src/Hiravir
-      run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true
+      run: >
+        dotnet publish
+        -f net10.0-windows10.0.19041.0
+        -c Release
+        -r win-x64
+        -p:WindowsPackageType=None
+        -p:SelfContained=true
+        -p:PublishAot=false
+        -p:PublishReadyToRun=true
+        --output ../../publish/hiravir-win
 
     - name: Upload Finished App
-      uses: actions/upload-artifact@v4 # <-- Updated to v4
+      uses: actions/upload-artifact@v4
       with:
         name: Hiravir-Portable-App
-        path: src/Hiravir/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish/
+        path: publish/hiravir-win/
