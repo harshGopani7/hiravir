@@ -1,18 +1,18 @@
 name: Build Windows App
 
 on:
-  workflow_dispatch: # Allows you to trigger the build manually
+  workflow_dispatch: 
 
 jobs:
   build:
-    runs-on: windows-latest # This cloud machine already has Visual Studio installed!
+    runs-on: windows-latest 
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # <-- Updated to v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4 # <-- Updated to v4
       with:
         dotnet-version: '10.0.x'
 
@@ -30,7 +30,7 @@ jobs:
       run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true
 
     - name: Upload Finished App
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4 # <-- Updated to v4
       with:
         name: Hiravir-Portable-App
         path: src/Hiravir/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish/
